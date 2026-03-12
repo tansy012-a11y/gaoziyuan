@@ -1,0 +1,105 @@
+class SortedArray:
+    """有序数组类（遍历版+手动移动元素）
+    支持：
+    1. 传入初始数字列表并使用冒泡排序排序
+    2. 插入新元素时手动移动后续元素，不使用内置insert函数
+    3. 实时获取/打印有序数组
+    """
+    def __init__(self, initial_list=None):
+        """
+        初始化有序数组
+        :param initial_list: 可选，初始数字列表（会用冒泡排序排序）
+        """
+        if initial_list is None:
+            self.array = []
+        else:
+            # 复制列表+冒泡排序初始化
+            self.array = self.bubble_sort(initial_list.copy())
+
+    def bubble_sort(self, arr):
+        """冒泡排序：将乱序数组转为升序"""
+        n = len(arr)
+        for i in range(n - 1):
+            swapped = False
+            for j in range(n - 1 - i):
+                if arr[j] > arr[j + 1]:
+                    arr[j], arr[j + 1] = arr[j + 1], arr[j]
+                    swapped = True
+            if not swapped:
+                break
+        return arr
+
+    def find_insert_position(self, value):
+        """逐次遍历查找value应插入的位置"""
+        insert_pos = 0
+        for i in range(len(self.array)):
+            if self.array[i] > value:
+                insert_pos = i
+                break
+            if i == len(self.array) - 1:
+                insert_pos = len(self.array)
+        return insert_pos
+
+    def insert(self, value):
+        """
+        手动实现元素移动+插入，不使用内置insert函数
+        :param value: 要插入的数字
+        """
+        # 1. 查找插入位置
+        insert_pos = self.find_insert_position(value)
+        # 2. 扩展数组长度（新增一个位置，初始值可设为任意，后续覆盖）
+        self.array.append(0)  # 先在末尾加一个占位元素，扩展数组
+        # 3. 手动将插入位置后的元素向后移动一位
+        # 从最后一个元素开始倒序移动，避免覆盖
+        for i in range(len(self.array)-1, insert_pos, -1):
+            self.array[i] = self.array[i-1]
+        # 4. 在插入位置放入新元素
+        self.array[insert_pos] = value
+
+    def get_array(self):
+        """获取当前的有序数组"""
+        return self.array
+
+    def __str__(self):
+        """打印对象时直接显示有序数组"""
+        return str(self.array)
+
+
+# ------------------- 交互式测试逻辑（可直接运行） -------------------
+if __name__ == "__main__":
+    print("===== 有序数组插入工具（手动移动元素版） =====")
+
+    # 第一步：输入初始数组
+    while True:
+        input_str = input("\n请输入初始数字（空格分隔，直接回车则为空数组）：")
+        if input_str.strip() == "":
+            initial_nums = []
+            break
+        try:
+            initial_nums = [int(num) for num in input_str.split()]
+            break
+        except ValueError:
+            print("输入错误！请仅输入数字，用空格分隔。")
+
+    # 实例化有序数组对象
+    sorted_arr = SortedArray(initial_list=initial_nums)
+    print(f"\n初始数组（已用冒泡排序排序）：{sorted_arr}")
+    print(f"初始数组长度：{len(sorted_arr.get_array())}")
+
+    # 第二步：循环插入新元素
+    print("\n===== 开始插入新元素 =====")
+    while True:
+        new_num_input = input("\n请输入要插入的数字（输入 q 退出）：")
+        if new_num_input.lower() == "q":
+            print("\n===== 退出程序 =====")
+            print(f"最终有序数组：{sorted_arr}")
+            print(f"最终数组长度：{len(sorted_arr.get_array())}")
+            break
+
+        try:
+            new_num = int(new_num_input)
+            sorted_arr.insert(new_num)
+            print(f"插入 {new_num} 后，有序数组：{sorted_arr}")
+            print(f"当前数组长度：{len(sorted_arr.get_array())}")
+        except ValueError:
+            print("输入错误！请输入有效的整数，或输入 q 退出。")
