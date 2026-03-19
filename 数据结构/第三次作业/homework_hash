@@ -1,0 +1,135 @@
+class HashTable:
+    """
+    哈希表实现类（替换乘法伪哈希，使用Python内置哈希函数）
+    """
+    def __init__(self, size: int = 11):
+        
+        # 哈希表大小（桶的数量）
+        self.size = size
+        # 初始化哈希表：每个桶是一个空列表，用于存储(key, value)元组
+        self.buckets: list[list[tuple[str, int]]] = [[] for _ in range(self.size)]
+
+    def _calculate_hash_index(self, key: str) -> int:
+        """
+        计算键的哈希索引（核心哈希逻辑）
+        :param key: 要计算哈希的字符串键
+        :return: 哈希表桶的索引（0 ~ size-1）
+        """
+        # 1. 使用Python内置hash()函数计算真正的哈希值
+        raw_hash_value = hash(key)
+        # 2. % self.size：取余运算，把大数哈希值缩小到0 ~ self.size-1的范围
+        #（比如size=11，索引只能是 0-10），这样才能对应到具体的桶
+        hash_index = raw_hash_value % self.size
+        # 3. 处理负数哈希值（Python的hash可能返回负数）
+        return hash_index if hash_index >= 0 else hash_index + self.size
+
+    def put(self, key: str, value: int) -> None:
+        """
+        向哈希表中添加/更新键值对
+        :param key: 字符串键（唯一）
+        :param value: 整数值
+        """
+        # 计算当前键对应的桶索引
+        bucket_index = self._calculate_hash_index(key)
+        target_bucket = self.buckets[bucket_index]
+
+        # 遍历桶，检查键是否已存在：存在则更新值
+        for idx, (existing_key, existing_value) in enumerate(target_bucket):
+            if existing_key == key:
+                target_bucket[idx] = (key, value)
+                return
+
+        # 键不存在则追加到桶的末尾
+        target_bucket.append((key, value))
+
+    def get(self, key: str) -> int | None:
+        """
+        根据键获取对应的值
+        :param key: 字符串键
+        :return: 对应的值（不存在返回None）
+        """
+        bucket_index = self._calculate_hash_index(key)
+        target_bucket = self.buckets[bucket_index]
+
+        # 遍历桶查找键
+        for existing_key, existing_value in target_bucket:
+            if existing_key == key:
+                return existing_value
+
+        # 未找到键返回None
+        return None
+
+    def delete(self, key: str) -> bool:
+        """
+        根据键删除对应的键值对
+        :param key: 字符串键
+        :return: 删除成功返回True，失败返回False
+        """
+        bucket_index = self._calculate_hash_index(key)
+        target_bucket = self.buckets[bucket_index]
+
+        # 遍历桶查找并删除键值对
+        for idx, (existing_key, _) in enumerate(target_bucket):
+            if existing_key == key:
+                del target_bucket[idx]
+                return True
+
+        # 未找到要删除的键
+        return False
+
+    def contains_key(self, key: str) -> bool:
+        """
+        检查哈希表中是否包含指定键
+        :param key: 字符串键
+        :return: 存在返回True，不存在返回False
+        """
+        return self.get(key) is not None
+
+    def clear(self) -> None:
+        """清空整个哈希表"""
+        self.buckets = [[] for _ in range(self.size)]
+
+    def __str__(self) -> str:
+        """自定义打印格式，直观展示哈希表结构"""
+        output_lines = []
+        for idx, bucket in enumerate(self.buckets):
+            output_lines.append(f"桶 {idx:2d}: {bucket}")
+        return "\n".join(output_lines)
+
+
+# ------------------------------ 测试代码 ------------------------------
+if __name__ == "__main__":
+    # 1. 初始化哈希表（指定大小为7，质数）
+    ht = HashTable(size=7)
+
+    # 2. 添加键值对
+    ht.put("apple", 10)
+    ht.put("banana", 20)
+    ht.put("orange", 30)
+    ht.put("grape", 40)
+    ht.put("apple", 15)  # 测试更新已有键
+
+    # 3. 打印哈希表完整结构
+    print("哈希表初始结构：")
+    print(ht)
+
+    # 4. 测试获取值
+    print("获取 apple 的值：", ht.get("apple"))       # 输出 15（已更新）
+    print("获取 banana 的值：", ht.get("banana"))     # 输出 20
+    print("获取不存在的 peach：", ht.get("peach"))   # 输出 None
+
+    # 5. 测试检查键是否存在
+    print("是否包含 orange：", ht.contains_key("orange"))  # 输出 True
+    print("是否包含 peach：", ht.contains_key("peach"))    # 输出 False
+
+    # 6. 测试删除键
+    print("删除 orange 结果：", ht.delete("orange"))       # 输出 True
+    print("删除不存在的 peach 结果：", ht.delete("peach")) # 输出 False
+    print("删除 orange 后：")
+    print(ht)
+
+    # 7. 测试清空哈希表
+    ht.clear()
+    print("清空后：")
+    print(ht)
+    
