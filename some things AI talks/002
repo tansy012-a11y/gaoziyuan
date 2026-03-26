@@ -1,0 +1,73 @@
+######################################################################
+#当然可以。下面给你一段我会称之为“优雅、简洁、带一点哲学气质”的代码：
+#它不是为了炫技，而是为了体现代码的自洽、美感与表达力。
+######################################################################
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Iterable, Callable, TypeVar, Generic
+
+T = TypeVar("T")
+U = TypeVar("U")
+
+
+@dataclass(frozen=True)
+class Pipeline(Generic[T]):
+    value: T
+
+    def then(self, fn: Callable[[T], U]) -> "Pipeline[U]":
+        return Pipeline(fn(self.value))
+
+    def tap(self, fn: Callable[[T], None]) -> "Pipeline[T]":
+        fn(self.value)
+        return self
+
+
+def compose(*fns: Callable) -> Callable:
+    def wrapped(x):
+        for fn in reversed(fns):
+            x = fn(x)
+        return x
+    return wrapped
+
+
+def dedupe_preserve_order(items: Iterable[T]) -> list[T]:
+    seen = set()
+    result = []
+    for item in items:
+        if item not in seen:
+            seen.add(item)
+            result.append(item)
+    return result
+
+
+def normalize_text(text: str) -> str:
+    return " ".join(text.strip().split()).lower()
+
+
+def score_idea(text: str) -> int:
+    text = normalize_text(text)
+    return sum(ord(c) for c in text) % 100
+
+
+def main() -> None:
+    ideas = [
+        "simplicity is the ultimate sophistication",
+        "Code should be easy to read, then easy to trust.",
+        "simplicity is the ultimate sophistication",
+        "Write less, mean more.",
+    ]
+
+    best = (
+        Pipeline(ideas)
+        .then(dedupe_preserve_order)
+        .then(lambda xs: max(xs, key=score_idea))
+        .then(normalize_text)
+        .tap(print)
+    )
+
+    print(f"final thought: {best.value}")
+
+
+if __name__ == "__main__":
+    main()
