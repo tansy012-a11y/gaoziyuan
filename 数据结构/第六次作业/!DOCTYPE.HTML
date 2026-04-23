@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>归并排序可视化</title>
+
+<style>
+body {
+    font-family: Arial;
+    text-align: center;
+    background: #f5f7fa;
+}
+
+h1 { margin-top: 20px; }
+
+.controls {
+    margin: 20px;
+}
+
+input {
+    padding: 8px;
+    width: 200px;
+}
+
+button {
+    padding: 8px 12px;
+    margin: 5px;
+    cursor: pointer;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    height: 300px;
+    margin-top: 30px;
+}
+
+.bar {
+    width: 30px;
+    margin: 0 5px;
+    background: #3b82f6;
+    color: white;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    font-size: 12px;
+    border-radius: 4px;
+}
+
+.compare { background: #f59e0b !important; }
+.write { background: #ef4444 !important; }
+.sorted { background: #22c55e !important; }
+
+.info {
+    margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>归并排序可视化</h1>
+
+<div class="controls">
+    <input id="input" value="8,3,5,2,9,1">
+    <button onclick="generate()">生成</button>
+    <button onclick="prev()">上一步</button>
+    <button onclick="next()">下一步</button>
+    <button onclick="autoPlay()">自动播放</button>
+</div>
+
+<div class="container" id="container"></div>
+
+<div class="info">
+    <p id="desc">点击生成开始</p>
+    <p id="counter"></p>
+</div>
+
+<script>
+let steps = [];
+let current = -1;
+let timer = null;
+
+// ===== 工具 =====
+function parseInput() {
+    return document.getElementById("input").value
+        .split(/[,，]/)
+        .map(Number)
+        .filter(n => !isNaN(n));
+}
+
+function snapshot(arr, desc, highlight = [], type="") {
+    steps.push({
+        arr: arr.map(x => x),
+        desc,
+        highlight,
+        type
+    });
+}
+
+// ===== 核心：归并排序 =====
+function generateSteps(arr) {
+    steps = [];
+    snapshot(arr, "初始数组");
+
+    function mergeSort(l, r) {
+        if (l >= r) return;
+
+        let mid = Math.floor((l + r) / 2);
+        snapshot(arr, `划分 [${l}, ${r}]`);
+
+        mergeSort(l, mid);
+        mergeSort(mid + 1, r);
+        merge(l, mid, r);
+    }
+
+    function merge(l, mid, r) {
+        let temp = [];
+        let i = l, j = mid + 1;
+
+        snapshot(arr, `合并 [${l},${mid}] 和 [${mid+1},${r}]`);
+
+        while (i <= mid && j <= r) {
+            snapshot(arr, `比较 ${arr[i]} 和 ${arr[j]}`, [i, j], "compare");
+
+            if (arr[i] <= arr[j]) {
+                temp.push(arr[i++]);
+            } else {
+                temp.push(arr[j++]);
+            }
+        }
+
+        while (i <= mid) temp.push(arr[i++]);
+        while (j <= r) temp.push(arr[j++]);
+
+        for (let k = 0; k < temp.length; k++) {
+            arr[l + k] = temp[k];
+            snapshot(arr, `写回位置 ${l+k}`, [l+k], "write");
+        }
+    }
+
+    mergeSort(0, arr.length - 1);
+    snapshot(arr, "排序完成");
+}
+
+// ===== 渲染 =====
+function render() {
+    let container = document.getElementById("container");
+    container.innerHTML = "";
+
+    let step = steps[current];
+    let max = Math.max(...step.arr);
+
+   step.arr.forEach((v, i) => {
+    let wrapper = document.createElement("div");
+    wrapper.style.display = "flex";
+    wrapper.style.flexDirection = "column";
+    wrapper.style.alignItems = "center";
+
+    // 柱子
+    let bar = document.createElement("div");
+    bar.className = "bar";
+    bar.style.height = (v / max * 200 + 30) + "px";
+    bar.innerText = v;
+
+    if (step.highlight.includes(i)) {
+        bar.classList.add(step.type);
+    }
+
+    // index 标签（关键）
+    let label = document.createElement("div");
+    label.innerText = i;
+    label.style.marginTop = "6px";
+    label.style.fontSize = "12px";
+    label.style.color = "#666";
+
+    wrapper.appendChild(bar);
+    wrapper.appendChild(label);
+
+    container.appendChild(wrapper);
+});
+
+    document.getElementById("desc").innerText = step.desc;
+    document.getElementById("counter").innerText =
+        (current + 1) + " / " + steps.length;
+}
+
+// ===== 控制 =====
+function generate() {
+    let arr = parseInput();
+    generateSteps(arr);
+    current = -1;
+}
+
+function next() {
+    if (current < steps.length - 1) {
+        current++;
+        render();
+    }
+}
+
+function prev() {
+    if (current > 0) {
+        current--;
+        render();
+    }
+}
+
+function autoPlay() {
+    if (timer) {
+        clearInterval(timer);
+        timer = null;
+        return;
+    }
+
+    timer = setInterval(() => {
+        if (current < steps.length - 1) {
+            current++;
+            render();
+        } else {
+            clearInterval(timer);
+        }
+    }, 800);
+}
+</script>
+
+</body>
+</html>
