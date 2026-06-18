@@ -1,0 +1,7 @@
+services:
+  mcp-server:
+    build: .
+    container_name: my_mcp_service
+    stdin_open: true
+    tty: true
+    restart: unless-stopped

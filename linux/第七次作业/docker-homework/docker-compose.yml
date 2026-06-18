@@ -1,0 +1,13 @@
+services:
+  ollama:
+    build: .
+    container_name: qwen3_service
+
+    ports:
+      - "11434:11434"
+
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  ollama_data:
